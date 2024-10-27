@@ -31,13 +31,16 @@ const App: React.FC = () => {
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             
-            {/* Protected routes */}
-            <Route element={<AuthGuard />}>
+            {/* TODO: Move this back to protected routes once backend is ready */}
+            <Route index element={<Game />} /> {/* Temporarily public */}
+            
+            {/* Protected routes - Commented out until backend is ready */}
+            {/* <Route element={<AuthGuard />}>
               <Route index element={<Game />} />
-            </Route>
+            </Route> */}
 
-            {/* Redirect to login if no match */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            {/* Redirect to game instead of login for now */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>

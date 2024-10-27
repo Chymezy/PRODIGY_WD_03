@@ -1,17 +1,8 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { Link } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
 
 const Header: React.FC = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   return (
     <header className="bg-white dark:bg-gray-800 shadow-md">
       <div className="container mx-auto px-4 py-4">
@@ -22,7 +13,8 @@ const Header: React.FC = () => {
 
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            {user.id ? (
+            {/* TODO: Uncomment auth-related elements once backend is ready */}
+            {/* {user.id ? (
               <div className="flex items-center gap-4">
                 <span className="text-gray-700 dark:text-gray-300">
                   {user.username}
@@ -41,7 +33,7 @@ const Header: React.FC = () => {
               >
                 Login
               </Link>
-            )}
+            )} */}
           </div>
         </div>
       </div>
