@@ -112,7 +112,14 @@ const GameReplayViewer: React.FC = () => {
           </div>
         </div>
 
-        <Board board={board} onSquareClick={() => {}} />
+        {/* Update Board usage */}
+        <div className="board-container">
+          <Board 
+            board={board}  // Use board instead of squares
+            onSquareClick={() => {}}
+            disabled={true}
+          />
+        </div>
 
         <div className="mt-6 flex justify-center items-center gap-4">
           <button

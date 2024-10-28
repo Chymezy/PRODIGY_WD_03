@@ -1,41 +1,27 @@
 import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '@/store';
-import { makeMove, setWinner } from '@/store/slices/gameSlice';
 import Square from './Square';
-import { checkWinner } from '@/utils/gameUtils';
 
-const Board: React.FC = () => {
-  const dispatch = useDispatch();
-  const { board, currentPlayer, isGameOver, winner } = useSelector(
-    (state: RootState) => state.game
-  );
+interface BoardProps {
+  board: Array<'X' | 'O' | null>;
+  onSquareClick: (index: number) => void;
+  disabled?: boolean;
+}
 
-  const handleClick = (index: number) => {
-    if (board[index] || isGameOver) return;
+interface SquareProps {
+  value: 'X' | 'O' | null;
+  onClick: () => void;
+}
 
-    dispatch(makeMove(index));
-    
-    const result = checkWinner(board);
-    if (result && typeof result !== 'object') {
-      dispatch(setWinner(result));
-    }
-  };
-
-  const winningCombination = winner ? (checkWinner(board, true) as number[]) : [];
-
+const Board: React.FC<BoardProps> = ({ board, onSquareClick, disabled = false }) => {
   return (
-    <div className="w-full max-w-md mx-auto p-4">
-      <div className="grid grid-cols-3 gap-3 aspect-square">
-        {board.map((value, index) => (
-          <Square
-            key={index}
-            value={value}
-            onClick={() => handleClick(index)}
-            isWinningSquare={Array.isArray(winningCombination) && winningCombination.includes(index)}
-          />
-        ))}
-      </div>
+    <div className="grid grid-cols-3 gap-2 max-w-[300px] mx-auto">
+      {board.map((value, i) => (
+        <Square
+          key={i}
+          value={value}
+          onClick={() => !disabled && onSquareClick(i)}
+        />
+      ))}
     </div>
   );
 };

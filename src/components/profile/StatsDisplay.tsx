@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { LeaderboardEntry } from '@/types/websocket';
 
 interface StatsDisplayProps {
   compact?: boolean;
@@ -9,8 +10,11 @@ interface StatsDisplayProps {
 const StatsDisplay: React.FC<StatsDisplayProps> = ({ compact = false }) => {
   const stats = useSelector((state: RootState) => {
     const user = state.auth;
-    return state.leaderboard.entries.find(e => e.username === user.username);
+    return state.leaderboard.entries.find(
+      (e: LeaderboardEntry) => e.username === user.username
+    );
   });
+  const userRank = useSelector((state: RootState) => state.leaderboard.userRank);
 
   if (!stats) {
     return null;
@@ -49,7 +53,7 @@ const StatsDisplay: React.FC<StatsDisplayProps> = ({ compact = false }) => {
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Rank</h3>
         <p className="mt-1 text-2xl font-semibold text-primary-light dark:text-primary-dark">
-          #{stats.rank || '?'}
+          #{userRank?.toLocaleString() || '---'}
         </p>
       </div>
     </div>

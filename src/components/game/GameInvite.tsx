@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import { wsService } from '@/services/websocketService';
 import PlayerSearch from '../profile/PlayerSearch';
+import { GameMessage } from '@/types/index';
 
 interface GameInviteProps {
   onClose: () => void;
@@ -20,12 +19,13 @@ const GameInvite: React.FC<GameInviteProps> = ({ onClose }) => {
     setError(null);
 
     try {
-      wsService.send({
+      const message: GameMessage = {
         type: 'SEND_INVITE',
         payload: {
           targetUserId: selectedPlayer.id
         }
-      });
+      };
+      wsService.send(message);
       onClose();
     } catch (err) {
       setError('Failed to send invite');
@@ -47,7 +47,7 @@ const GameInvite: React.FC<GameInviteProps> = ({ onClose }) => {
 
         <div className="mb-4">
           <PlayerSearch
-            onSelect={(player) => setSelectedPlayer(player)}
+            onSelect={setSelectedPlayer}
             selectedPlayer={selectedPlayer}
           />
         </div>

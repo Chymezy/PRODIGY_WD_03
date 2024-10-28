@@ -1,21 +1,22 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { RootState, AppDispatch } from '@/store';
 import { fetchLeaderboard, fetchUserRank } from '@/store/slices/leaderboardSlice';
+import { LeaderboardEntry } from '@/types/websocket';
 
 const LeaderboardTable: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { entries, userRank, loading, error } = useSelector(
     (state: RootState) => state.leaderboard
   );
-  const userId = useSelector((state: RootState) => state.auth.id);
+  const username = useSelector((state: RootState) => state.auth.username);
 
   useEffect(() => {
     dispatch(fetchLeaderboard());
-    if (userId) {
+    if (username) {
       dispatch(fetchUserRank());
     }
-  }, [dispatch, userId]);
+  }, [dispatch, username]);
 
   if (loading) {
     return (
@@ -35,7 +36,7 @@ const LeaderboardTable: React.FC = () => {
 
   return (
     <div className="overflow-x-auto">
-      {userId && (
+      {username && (
         <div className="mb-4 p-4 bg-primary-light/10 dark:bg-primary-dark/10 rounded-lg">
           <p className="text-center font-semibold">
             Your Rank: #{userRank}
@@ -63,8 +64,8 @@ const LeaderboardTable: React.FC = () => {
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-          {entries.map((entry, index) => (
-            <tr key={entry.username} className={entry.username === userId ? 'bg-primary-light/5 dark:bg-primary-dark/5' : ''}>
+          {entries.map((entry: LeaderboardEntry, index: number) => (
+            <tr key={entry.username} className={entry.username === username ? 'bg-primary-light/5 dark:bg-primary-dark/5' : ''}>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                 #{index + 1}
               </td>

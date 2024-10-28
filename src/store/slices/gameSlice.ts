@@ -1,12 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { GameState, Player } from '@/types';
+import { GameState } from '@/types';
 
 const initialState: GameState = {
   board: Array(9).fill(null),
   currentPlayer: 'X',
   winner: null,
-  gameMode: 'PVP',
+  gameMode: 'ONLINE',
   isGameOver: false,
+  roomId: undefined,
+  playerSymbol: null,
+  gameState: 'waiting'
 };
 
 const gameSlice = createSlice({
@@ -14,26 +17,20 @@ const gameSlice = createSlice({
   initialState,
   reducers: {
     makeMove: (state, action: PayloadAction<number>) => {
-      if (!state.board[action.payload] && !state.isGameOver) {
+      if (state.board[action.payload] === null && !state.isGameOver) {
         state.board[action.payload] = state.currentPlayer;
         state.currentPlayer = state.currentPlayer === 'X' ? 'O' : 'X';
       }
     },
-    setWinner: (state, action: PayloadAction<Player | 'draw'>) => {
-      state.winner = action.payload;
-      state.isGameOver = true;
+    setGameState: (state, action: PayloadAction<Partial<GameState>>) => {
+      return { ...state, ...action.payload };
     },
-    setGameMode: (state, action: PayloadAction<'AI' | 'PVP'>) => {
+    resetGame: () => initialState,
+    setGameMode: (state, action: PayloadAction<'AI' | 'PVP' | 'ONLINE'>) => {
       state.gameMode = action.payload;
-    },
-    resetGame: (state) => {
-      state.board = Array(9).fill(null);
-      state.currentPlayer = 'X';
-      state.winner = null;
-      state.isGameOver = false;
-    },
-  },
+    }
+  }
 });
 
-export const { makeMove, setWinner, setGameMode, resetGame } = gameSlice.actions;
+export const { makeMove, setGameState, resetGame, setGameMode } = gameSlice.actions;
 export default gameSlice.reducer;

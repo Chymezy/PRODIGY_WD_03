@@ -8,7 +8,12 @@ interface PlayerSearchResult {
   rating: number;
 }
 
-const PlayerSearch: React.FC = () => {
+interface PlayerSearchProps {
+  onSelect: (player: { id: string; username: string }) => void;
+  selectedPlayer: { id: string; username: string } | null;
+}
+
+const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect, selectedPlayer }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PlayerSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -75,7 +80,9 @@ const PlayerSearch: React.FC = () => {
           {results.map((player) => (
             <button
               key={player.id}
-              onClick={() => viewProfile(player.id)}
+              onClick={() => {
+                onSelect({ id: player.id, username: player.username });
+              }}
               className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700
                 first:rounded-t-lg last:rounded-b-lg"
             >

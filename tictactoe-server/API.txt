@@ -1,0 +1,274 @@
+TicTacToe API Documentation
+
+Base URL
+http://localhost:8080
+
+Authentication
+Most endpoints require JWT authentication via cookies. The server uses two types of tokens:
+- token (Access Token): Short-lived token (15 minutes)
+- refreshToken (Refresh Token): Long-lived token (7 days)
+
+Authentication Endpoints
+
+1. Register User
+POST /auth/register
+Content-Type: application/json
+
+Request Body:
+{
+  "username": "string",
+  "email": "string",
+  "password": "string"  // minimum 8 characters
+}
+
+Response: 200 OK
+{
+  "user": {
+    "id": "string",
+    "username": "string",
+    "email": "string"
+  }
+}
+
+Errors:
+- 400 Bad Request: Missing fields or invalid data
+- 400 Bad Request: Email already in use
+- 500 Internal Server Error: Server error
+
+2. Login
+POST /auth/login
+Content-Type: application/json
+
+Request Body:
+{
+  "email": "string",
+  "password": "string"
+}
+
+Response: 200 OK
+{
+  "user": {
+    "id": "string",
+    "username": "string",
+    "email": "string"
+  }
+}
+
+Cookies Set:
+- token: Access token (15 minutes)
+- refreshToken: Refresh token (7 days)
+
+Errors:
+- 400 Bad Request: Missing credentials
+- 401 Unauthorized: Invalid credentials
+- 500 Internal Server Error: Server error
+
+3. Logout
+POST /auth/logout
+
+Response: 200 OK
+{
+  "message": "Logged out successfully"
+}
+
+Protected Endpoints
+All these endpoints require authentication via cookie token.
+
+4. Get User Profile
+GET /api/profile
+
+Response: 200 OK
+{
+  "user": {
+    "id": "string",
+    "username": "string",
+    "email": "string"
+  }
+}
+
+5. Get User Stats
+GET /api/stats
+
+Response: 200 OK
+{
+  "username": "string",
+  "rating": "number",
+  "wins": "number",
+  "gamesPlayed": "number",
+  "winRate": "number"
+}
+
+6. Get Leaderboard
+GET /api/leaderboard?limit=10
+
+Query Parameters:
+- limit (optional): Number of players to return (default: 10)
+
+Response: 200 OK
+[
+  {
+    "username": "string",
+    "rating": "number",
+    "wins": "number",
+    "gamesPlayed": "number",
+    "winRate": "number"
+  }
+]
+
+7. Get User Rank
+GET /api/leaderboard/rank
+
+Response: 200 OK
+{
+  "rank": "number"
+}
+
+8. Get User Game Replays
+GET /api/replays/user
+
+Response: 200 OK
+[
+  {
+    "id": "string",
+    "playerX": {
+      "username": "string"
+    },
+    "playerO": {
+      "username": "string"
+    },
+    "winner": "X" | "O" | "draw",
+    "moves": [
+      {
+        "player": "X" | "O",
+        "position": "number",
+        "timestamp": "date"
+      }
+    ],
+    "startTime": "date",
+    "endTime": "date"
+  }
+]
+
+9. Get Specific Game Replay
+GET /api/replays/game/:gameId
+
+Parameters:
+- gameId: ID of the game to retrieve
+
+Response: 200 OK
+{
+  "id": "string",
+  "playerX": {
+    "username": "string"
+  },
+  "playerO": {
+    "username": "string"
+  },
+  "winner": "X" | "O" | "draw",
+  "moves": [
+    {
+      "player": "X" | "O",
+      "position": "number",
+      "timestamp": "date"
+    }
+  ],
+  "startTime": "date",
+  "endTime": "date"
+}
+
+WebSocket Endpoints
+WebSocket connection URL: ws://localhost:8080/game
+
+Game Messages:
+
+1. Create Room
+{
+  "type": "CREATE_ROOM",
+  "payload": {}
+}
+
+2. Join Room
+{
+  "type": "JOIN_ROOM",
+  "payload": {
+    "roomId": "string"
+  }
+}
+
+3. Make Move
+{
+  "type": "MAKE_MOVE",
+  "payload": {
+    "position": "number"  // 0-8
+  }
+}
+
+4. Send Game Invite
+{
+  "type": "SEND_INVITE",
+  "payload": {
+    "targetUserId": "string"
+  }
+}
+
+5. Respond to Invite
+{
+  "type": "RESPOND_INVITE",
+  "payload": {
+    "inviteId": "string",
+    "accept": "boolean"
+  }
+}
+
+Server Messages:
+
+1. Game State Update
+{
+  "type": "GAME_STATE",
+  "payload": {
+    "board": ["X" | "O" | null],
+    "currentPlayer": "X" | "O",
+    "gameState": "waiting" | "playing" | "finished"
+  }
+}
+
+2. Game Over
+{
+  "type": "GAME_OVER",
+  "payload": {
+    "winner": "X" | "O" | "draw",
+    "board": ["X" | "O" | null]
+  }
+}
+
+3. Player Left
+{
+  "type": "PLAYER_LEFT",
+  "payload": {
+    "player": "X" | "O"
+  }
+}
+
+Error Responses
+All endpoints may return these error responses:
+- 401 Unauthorized: Missing or invalid authentication
+- 429 Too Many Requests: Rate limit exceeded
+- 500 Internal Server Error: Server error
+
+Error response format:
+{
+  "message": "string"
+}
+
+Rate Limiting
+- Auth endpoints: 100 requests per 15 minutes
+- API endpoints: 1000 requests per 15 minutes
+
+Security Features
+1. JWT Authentication with refresh tokens
+2. HTTP-only cookies
+3. CORS protection
+4. Rate limiting
+5. Helmet security headers
+6. Request size limiting (10kb)
+7. Secure WebSocket authentication

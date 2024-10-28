@@ -23,8 +23,8 @@ const GameInviteNotification: React.FC<GameInviteNotificationProps> = ({ invite,
     setIsVisible(true);
     const timer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(onClose, 300); // Wait for fade out animation
-    }, 30000); // Auto close after 30 seconds
+      setTimeout(onClose, 300);
+    }, 30000);
 
     return () => clearTimeout(timer);
   }, [onClose]);
@@ -41,29 +41,20 @@ const GameInviteNotification: React.FC<GameInviteNotificationProps> = ({ invite,
       });
 
       if (accept) {
-        // Wait for game creation response before navigating
-        const timeout = setTimeout(() => {
-          setResponding(false);
-          onClose();
-        }, 5000);
-
         const handleGameCreated = (message: any) => {
           if (message.type === 'GAME_CREATED') {
-            clearTimeout(timeout);
             navigate(`/game/${message.payload.roomId}`);
           }
         };
 
         wsService.addMessageHandler(handleGameCreated);
-        return () => {
-          wsService.removeMessageHandler(handleGameCreated);
-          clearTimeout(timeout);
-        };
+        return () => wsService.removeMessageHandler(handleGameCreated);
       } else {
         onClose();
       }
     } catch (error) {
       console.error('Error responding to invite:', error);
+    } finally {
       setResponding(false);
     }
   };
