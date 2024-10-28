@@ -13,22 +13,30 @@ const Square: React.FC<SquareProps> = ({ value, onClick, isWinningSquare = false
       onClick={onClick}
       className={`
         w-full aspect-square
-        text-4xl sm:text-5xl md:text-6xl
+        text-4xl sm:text-5xl md:text-6xl lg:text-7xl
         font-bold
-        border-2
+        border-2 border-gray-300 dark:border-gray-600
         rounded-lg
         transition-all
         duration-200
         flex
         items-center
         justify-center
+        shadow-md
+        hover:shadow-lg
         ${isWinningSquare 
-          ? 'bg-primary-light/20 dark:bg-primary-dark/20' 
+          ? 'bg-primary-light/20 dark:bg-primary-dark/20 border-primary-light dark:border-primary-dark' 
           : 'hover:bg-gray-100 dark:hover:bg-gray-700'}
         ${value === 'X' ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}
       `}
+      disabled={!!value}
+      aria-label={`Square ${value || 'empty'}`}
     >
-      {value}
+      {value && (
+        <span className="transform transition-all duration-200 hover:scale-105">
+          {value}
+        </span>
+      )}
     </button>
   );
 };

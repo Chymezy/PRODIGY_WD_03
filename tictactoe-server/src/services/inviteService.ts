@@ -1,13 +1,9 @@
 import { GameInvite, IGameInvite } from '../models/GameInvite';
-import { User, IUser } from '../models/User';
-import { WsConnection } from '../types';
+import { User } from '../models/User';
+import { WsConnection, GameInviteMessage } from '../types';
 import { config } from '../config';
 import WebSocket from 'ws';
-import mongoose from 'mongoose';
-
-interface PopulatedInvite extends Omit<IGameInvite, 'from'> {
-  from: IUser;
-}
+import mongoose, { Types } from 'mongoose';
 
 export class InviteService {
   private wsConnections: Map<string, WsConnection> = new Map();
@@ -22,6 +18,12 @@ export class InviteService {
 
   getConnection(userId: string): WsConnection | undefined {
     return this.wsConnections.get(userId);
+  }
+
+  private sendToClient(ws: WsConnection, message: GameInviteMessage) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message));
+    }
   }
 
   async createInvite(fromUserId: string, toUserId: string): Promise<IGameInvite> {
@@ -42,24 +44,27 @@ export class InviteService {
     });
 
     const savedInvite = await invite.save();
-    const populatedInvite = await savedInvite.populate<PopulatedInvite>('from', 'username');
+    if (!savedInvite._id) {
+      throw new Error('Failed to create invite');
+    }
+
+    const fromUser = await User.findById(fromUserId).select('username');
 
     const targetWs = this.wsConnections.get(toUserId);
     if (targetWs?.readyState === WebSocket.OPEN) {
-      targetWs.send(JSON.stringify({
+      this.sendToClient(targetWs, {
         type: 'GAME_INVITE',
         payload: {
-          id: populatedInvite._id,
+          inviteId: savedInvite._id.toString(),
           from: {
             id: fromUserId,
-            username: populatedInvite.from.username
-          },
-          timestamp: populatedInvite.createdAt
+            username: fromUser?.username
+          }
         }
-      }));
+      });
     }
 
-    return populatedInvite;
+    return savedInvite;
   }
 
   async respondToInvite(inviteId: string, userId: string, accept: boolean): Promise<IGameInvite | null> {
@@ -67,28 +72,24 @@ export class InviteService {
       _id: inviteId,
       to: new mongoose.Types.ObjectId(userId),
       status: 'pending'
-    }).populate<PopulatedInvite>('from', 'username');
+    });
 
-    if (!invite) {
+    if (!invite || !invite.from) {
       throw new Error('Invite not found or already processed');
     }
 
     invite.status = accept ? 'accepted' : 'declined';
     const updatedInvite = await invite.save();
 
-    const senderWs = this.wsConnections.get(invite.from._id.toString());
+    const senderWs = this.wsConnections.get(invite.from.toString());
     if (senderWs?.readyState === WebSocket.OPEN) {
-      senderWs.send(JSON.stringify({
+      this.sendToClient(senderWs, {
         type: 'INVITE_RESPONSE',
         payload: {
-          inviteId: invite._id,
-          accepted: accept,
-          from: {
-            id: invite.from._id,
-            username: invite.from.username
-          }
+          inviteId: (invite._id as Types.ObjectId).toString(),
+          accepted: accept
         }
-      }));
+      });
     }
 
     return updatedInvite;

@@ -46,14 +46,12 @@ export interface PopulatedUser extends IUser {
 export interface GameInviteMessage {
   type: 'GAME_INVITE' | 'INVITE_RESPONSE' | 'INVITE_CANCELLED';
   payload: {
-    id?: string;
-    inviteId?: string;
+    inviteId: string;
     from?: {
       id: string;
       username?: string;
     };
     accepted?: boolean;
-    timestamp?: Date;
   };
 }
 
@@ -72,7 +70,16 @@ export interface GameStateMessage {
   };
 }
 
-export type GameServerMessage = GameInviteMessage | GameStateMessage | {
-  type: 'ERROR';
-  payload: { message: string };
-};
+export interface GameServerMessage {
+  type: string;
+  payload: {
+    roomId?: string;
+    board?: Array<'X' | 'O' | null>;
+    currentPlayer?: 'X' | 'O';
+    playerSymbol?: 'X' | 'O';
+    winner?: 'X' | 'O' | 'draw';
+    message?: string;
+    position?: number;
+    player?: 'X' | 'O';
+  };
+}

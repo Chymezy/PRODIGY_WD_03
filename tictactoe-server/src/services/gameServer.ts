@@ -151,7 +151,7 @@ export class GameServer {
           roomId,
           board: room.board,
           currentPlayer: room.currentPlayer,
-          symbol: player.playerSymbol // Changed from playerSymbol to symbol
+          playerSymbol: player.playerSymbol  // Use playerSymbol instead of symbol
         }
       });
     });

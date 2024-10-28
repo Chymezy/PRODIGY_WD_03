@@ -8,22 +8,25 @@ const GameStatus: React.FC = () => {
   );
 
   return (
-    <div className="text-center my-4 text-xl sm:text-2xl font-bold">
-      {winner ? (
-        <div className={`
-          ${winner === 'X' ? 'text-blue-600 dark:text-blue-400' : 
-           winner === 'O' ? 'text-red-600 dark:text-red-400' : 
-           'text-gray-600 dark:text-gray-400'}
-        `}>
-          {winner === 'draw' ? "It's a Draw!" : `Player ${winner} Wins!`}
-        </div>
-      ) : (
-        <div className={`
-          ${currentPlayer === 'X' ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}
-        `}>
-          Player {currentPlayer}'s Turn
-        </div>
-      )}
+    <div className="text-center my-4">
+      <div className={`
+        text-xl sm:text-2xl font-bold
+        ${winner === 'X' ? 'text-blue-600 dark:text-blue-400' : 
+         winner === 'O' ? 'text-red-600 dark:text-red-400' : 
+         'text-gray-800 dark:text-gray-200'}
+      `}>
+        {winner ? (
+          <div className="animate-fade-in">
+            {winner === 'draw' ? "It's a Draw!" : `Player ${winner} Wins!`}
+          </div>
+        ) : (
+          <div className={`
+            ${currentPlayer === 'X' ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}
+          `}>
+            Player {currentPlayer}'s Turn
+          </div>
+        )}
+      </div>
     </div>
   );
 };

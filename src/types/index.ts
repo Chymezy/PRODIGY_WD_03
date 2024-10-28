@@ -4,8 +4,10 @@ export interface GameState {
   board: Player[];
   currentPlayer: Player;
   winner: Player | 'draw' | null;
-  gameMode: 'AI' | 'PVP';
+  gameMode: 'AI' | 'PVP' | 'ONLINE';
   isGameOver: boolean;
+  roomId?: string;
+  playerSymbol?: Player;
 }
 
 export interface UserState {
@@ -16,4 +18,9 @@ export interface UserState {
 
 export interface ThemeState {
   isDarkMode: boolean;
+}
+
+export interface GameMessage {
+  type: 'MOVE' | 'JOIN_ROOM' | 'CREATE_ROOM' | 'GAME_STATE' | 'ERROR';
+  payload: any;
 }
