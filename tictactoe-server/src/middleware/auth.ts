@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken } from '../utils/jwt';
+import { verifyToken, generateToken } from '../utils/jwt';
+import { config } from '../config';
+import { IUser } from '../models/User';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -9,6 +11,26 @@ export interface AuthRequest extends Request {
   };
 }
 
+interface TokenPayload {
+  sub: string;
+  email: string;
+  username: string;
+}
+
+// Create a minimal user object that matches IUser interface
+const createMinimalUser = (data: TokenPayload): Partial<IUser> => ({
+  _id: data.sub,
+  email: data.email,
+  username: data.username,
+  passwordHash: '',
+  rating: 1000,
+  gamesPlayed: 0,
+  wins: 0,
+  losses: 0,
+  draws: 0,
+  achievements: []
+});
+
 export const authenticate = async (
   req: AuthRequest,
   res: Response,
@@ -16,13 +38,35 @@ export const authenticate = async (
 ) => {
   try {
     const token = req.cookies.token;
+    const refreshToken = req.cookies.refreshToken;
 
     if (!token) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    const decoded = verifyToken(token);
+    const decoded = verifyToken(token) as TokenPayload | null;
     if (!decoded) {
+      // Try to use refresh token if available
+      if (refreshToken) {
+        const refreshDecoded = verifyToken(refreshToken) as TokenPayload | null;
+        if (refreshDecoded) {
+          // Generate new access token using minimal user object
+          const minimalUser = createMinimalUser(refreshDecoded);
+          const newToken = generateToken(minimalUser as IUser);
+
+          res.cookie('token', newToken, { 
+            ...config.cookie,
+            maxAge: 15 * 60 * 1000 // 15 minutes for access token
+          });
+
+          req.user = {
+            id: refreshDecoded.sub,
+            email: refreshDecoded.email,
+            username: refreshDecoded.username
+          };
+          return next();
+        }
+      }
       return res.status(401).json({ message: 'Invalid token' });
     }
 

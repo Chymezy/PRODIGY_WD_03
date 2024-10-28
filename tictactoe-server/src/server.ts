@@ -10,11 +10,12 @@ import { GameServer } from './services/gameServer';
 import { wsAuth } from './middleware/wsAuth';
 import { WsConnection, WsAuthRequest } from './types';
 import { config } from './config';
-import { generateToken } from './utils/jwt';
+import { generateToken, generateRefreshToken } from './utils/jwt';
 import { createUser, findUserByEmail, validatePassword } from './models/userModel';
 import { authenticate, rateLimiter, AuthRequest } from './middleware/auth';
 import { replayService } from './services/replayService';
 import { leaderboardService } from './services/leaderboardService';
+import { User } from './models/User';
 
 dotenv.config();
 
@@ -111,13 +112,24 @@ const loginHandler: RequestHandler = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     
+    // Generate both tokens
     const token = generateToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    // Store refresh token
+    await User.findByIdAndUpdate(user.id, {
+      $push: { refreshTokens: refreshToken }
+    });
+
+    // Set both cookies with proper expiry times
     res.cookie('token', token, { 
       ...config.cookie,
-      path: '/',
-      sameSite: 'strict',
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
+      maxAge: config.accessTokenExpiry 
+    });
+    
+    res.cookie('refreshToken', refreshToken, {
+      ...config.cookie,
+      maxAge: config.refreshTokenExpiry
     });
 
     return res.json({ 
@@ -133,10 +145,54 @@ const loginHandler: RequestHandler = async (req, res) => {
   }
 };
 
-const logoutHandler: RequestHandler = (req, res) => {
-  res.clearCookie('token', { path: '/' });
-  return res.json({ message: 'Logged out successfully' });
+const logoutHandler: RequestHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    // Clear both tokens from cookies
+    res.clearCookie('token', { 
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'strict'
+    });
+    
+    res.clearCookie('refreshToken', {
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'strict'
+    });
+
+    // If you're storing refresh tokens in the database, remove it
+    if (req.user?.id) {
+      await User.findByIdAndUpdate(req.user.id, {
+        $pull: { refreshTokens: req.cookies.refreshToken }
+      });
+    }
+
+    // Invalidate any active sessions
+    if (req.user?.id) {
+      await invalidateUserSessions(req.user.id);
+    }
+
+    return res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    return res.status(500).json({ message: 'Error during logout' });
+  }
 };
+
+// Add session invalidation helper
+async function invalidateUserSessions(userId: string): Promise<void> {
+  // Implement your session invalidation logic here
+  // For example, you might:
+  // 1. Remove all refresh tokens for this user
+  // 2. Add the current timestamp to a blacklist
+  // 3. Update the user's tokenVersion to invalidate all existing tokens
+  await User.findByIdAndUpdate(userId, {
+    $set: { refreshTokens: [] },
+    $inc: { tokenVersion: 1 }
+  });
+}
 
 authRouter.post('/register', registerHandler);
 authRouter.post('/login', loginHandler);

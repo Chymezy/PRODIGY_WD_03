@@ -17,6 +17,7 @@ export const config = {
     sameSite: 'strict' as const,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   },
-  inviteCleanupInterval: 60000, // Clean up expired invites every minute
-  inviteTimeout: 5 * 60 * 1000, // Invites expire after 5 minutes
+  accessTokenExpiry: 15 * 60 * 1000, // 15 minutes
+  refreshTokenExpiry: 7 * 24 * 60 * 60 * 1000, // 7 days
+  inviteTimeout: 5 * 60 * 1000 // 5 minutes
 } as const;

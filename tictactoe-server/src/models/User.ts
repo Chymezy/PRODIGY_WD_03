@@ -35,7 +35,9 @@ const UserSchema = new Schema({
     name: String,
     description: String,
     unlockedAt: { type: Date, default: Date.now }
-  }]
+  }],
+  refreshTokens: [{ type: String }],
+  tokenVersion: { type: Number, default: 0 }
 }, {
   timestamps: true
 });
