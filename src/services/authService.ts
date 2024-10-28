@@ -10,7 +10,7 @@ interface ErrorResponse {
   message: string;
 }
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:8080';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -18,6 +18,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 // Add interceptor to add token to requests
@@ -36,10 +37,6 @@ export const authService = {
         email,
         password,
       });
-      
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-      }
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<ErrorResponse>;
@@ -60,10 +57,6 @@ export const authService = {
         email,
         password,
       });
-      
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-      }
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<ErrorResponse>;
@@ -74,6 +67,7 @@ export const authService = {
   },
 
   logout(): void {
+    api.post('/auth/logout');
     localStorage.removeItem('token');
   },
 

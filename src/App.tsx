@@ -1,49 +1,44 @@
-import * as React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import {
-  Game,
-  Login,
-  Register,
-  Layout,
-  AuthGuard
-} from '@/components';
+import Layout from './components/layout/Layout';
+import AuthGuard from './components/auth/AuthGuard';
+import Game from './components/game/Game';
+import GameReplayViewer from './components/game/GameReplayViewer';
+import Login from './components/auth/Login';
+import Register from './components/auth/Register';
+import PlayerProfile from './components/profile/PlayerProfile';
+import LeaderboardTable from './components/leaderboard/LeaderboardTable';
 
 const App: React.FC = () => {
-  const { isDarkMode } = useSelector((state: RootState) => state.theme);
-
-  React.useEffect(() => {
-    // Apply dark mode to both html and div.dark
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+  const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            {/* Public routes */}
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
-            
-            {/* TODO: Move this back to protected routes once backend is ready */}
-            <Route index element={<Game />} /> {/* Temporarily public */}
-            
-            {/* Protected routes - Commented out until backend is ready */}
-            {/* <Route element={<AuthGuard />}>
-              <Route index element={<Game />} />
-            </Route> */}
+    <div className={isDarkMode ? 'dark' : ''}>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/leaderboard" element={<LeaderboardTable />} />
 
-            {/* Redirect to game instead of login for now */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+            {/* Protected Routes - Require Authentication */}
+            <Route element={<AuthGuard />}>
+              <Route element={<Layout />}>
+                <Route path="/" element={<Game />} />
+                <Route path="/game/:roomId" element={<Game />} />
+                <Route path="/replay/:gameId" element={<GameReplayViewer />} />
+                <Route path="/profile" element={<PlayerProfile />} />
+              </Route>
+            </Route>
+
+            {/* Catch-all route - Redirect to login */}
+            <Route path="*" element={<Login />} />
+          </Routes>
+        </Router>
+      </div>
     </div>
   );
 };

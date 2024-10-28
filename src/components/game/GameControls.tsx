@@ -13,6 +13,7 @@ const GameControls: React.FC = () => {
 
   const handleModeChange = (mode: 'AI' | 'PVP' | 'ONLINE') => {
     dispatch(setGameMode(mode));
+    dispatch(resetGame());
   };
 
   return (
@@ -36,7 +37,7 @@ const GameControls: React.FC = () => {
               : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
             } hover:opacity-90`}
         >
-          vs Player
+          Local PVP
         </button>
         
         <button
@@ -49,6 +50,18 @@ const GameControls: React.FC = () => {
             } hover:opacity-90`}
         >
           vs AI
+        </button>
+
+        <button
+          onClick={() => handleModeChange('ONLINE')}
+          className={`flex-1 sm:flex-none px-4 py-3 rounded-lg text-sm sm:text-base font-medium
+            transition-all duration-200 shadow-md hover:shadow-lg
+            ${gameMode === 'ONLINE'
+              ? 'bg-primary-light dark:bg-primary-dark text-white'
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+            } hover:opacity-90`}
+        >
+          Online
         </button>
       </div>
     </div>
