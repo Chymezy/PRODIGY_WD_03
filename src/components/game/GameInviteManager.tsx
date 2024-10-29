@@ -3,7 +3,7 @@ import { wsService } from '@/services/websocketService';
 import GameInviteNotification from './GameInviteNotification';
 
 interface GameInvite {
-  id: string;
+  inviteId: string;
   from: {
     id: string;
     username: string;
@@ -18,7 +18,11 @@ const GameInviteManager: React.FC = () => {
     const handleInvite = (message: any) => {
       if (message.type === 'GAME_INVITE') {
         console.log('Received invite:', message.payload);
-        setInvites(prev => [...prev, message.payload]);
+        setInvites(prev => [...prev, {
+          inviteId: message.payload.inviteId,
+          from: message.payload.from,
+          timestamp: new Date()
+        }]);
       }
     };
 
@@ -27,16 +31,20 @@ const GameInviteManager: React.FC = () => {
   }, []);
 
   const removeInvite = (inviteId: string) => {
-    setInvites(prev => prev.filter(invite => invite.id !== inviteId));
+    setInvites(prev => prev.filter(invite => invite.inviteId !== inviteId));
   };
 
   return (
     <>
-      {invites.map(invite => (
+      {invites.map((invite) => (
         <GameInviteNotification
-          key={invite.id}
-          invite={invite}
-          onClose={() => removeInvite(invite.id)}
+          key={invite.inviteId}
+          invite={{
+            id: invite.inviteId,
+            from: invite.from,
+            timestamp: invite.timestamp
+          }}
+          onClose={() => removeInvite(invite.inviteId)}
         />
       ))}
     </>

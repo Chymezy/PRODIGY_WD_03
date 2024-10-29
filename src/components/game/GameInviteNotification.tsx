@@ -29,6 +29,20 @@ const GameInviteNotification: React.FC<GameInviteNotificationProps> = ({ invite,
     return () => clearTimeout(timer);
   }, [onClose]);
 
+  useEffect(() => {
+    // Listen for game start message
+    const handleGameStart = (message: any) => {
+      console.log('Received game start message:', message);
+      if (message.type === 'GAME_START' && message.payload.roomId) {
+        navigate(`/game/${message.payload.roomId}`);
+        onClose();
+      }
+    };
+
+    wsService.addMessageHandler(handleGameStart);
+    return () => wsService.removeMessageHandler(handleGameStart);
+  }, [navigate, onClose]);
+
   const handleResponse = async (accept: boolean) => {
     setResponding(true);
     try {
@@ -41,27 +55,11 @@ const GameInviteNotification: React.FC<GameInviteNotificationProps> = ({ invite,
         }
       });
 
-      if (accept) {
-        // Listen for game creation response
-        const handleGameCreated = (message: any) => {
-          console.log('Received game created message:', message);
-          if (message.type === 'GAME_CREATED' && message.payload.roomId) {
-            navigate(`/game/${message.payload.roomId}`);
-            onClose();
-          }
-        };
-
-        wsService.addMessageHandler(handleGameCreated);
-        // Clean up the handler after 10 seconds if no response
-        setTimeout(() => {
-          wsService.removeMessageHandler(handleGameCreated);
-        }, 10000);
-      } else {
+      if (!accept) {
         onClose();
       }
     } catch (error) {
       console.error('Error responding to invite:', error);
-    } finally {
       setResponding(false);
     }
   };

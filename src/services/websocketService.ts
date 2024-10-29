@@ -37,6 +37,13 @@ class WebSocketService {
           try {
             const message: GameMessage = JSON.parse(event.data);
             console.log('WebSocket received message:', message);
+            
+            // Handle error messages
+            if (message.type === 'ERROR') {
+              console.error('Server error:', message.payload.message);
+              return;
+            }
+            
             this.messageHandlers.forEach(handler => handler(message));
           } catch (error) {
             console.error('Error parsing WebSocket message:', error);
