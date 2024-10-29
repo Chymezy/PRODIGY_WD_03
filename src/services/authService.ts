@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { UserState } from '@/types';
+import { wsService } from '@/services/websocketService';
 
 interface AuthResponse {
   user: UserState;
@@ -37,6 +38,10 @@ export const authService = {
         email,
         password,
       });
+      
+      // Connect to WebSocket after successful login
+      await wsService.connect();
+      
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<ErrorResponse>;

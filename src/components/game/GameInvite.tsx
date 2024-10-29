@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { wsService } from '@/services/websocketService';
 import PlayerSearch from '../profile/PlayerSearch';
-import { GameMessage } from '@/types/index';
 
 interface GameInviteProps {
   onClose: () => void;
@@ -11,6 +10,7 @@ const GameInvite: React.FC<GameInviteProps> = ({ onClose }) => {
   const [selectedPlayer, setSelectedPlayer] = useState<{ id: string; username: string } | null>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inviteSent, setInviteSent] = useState(false);
 
   const handleInvite = async () => {
     if (!selectedPlayer) return;
@@ -19,14 +19,14 @@ const GameInvite: React.FC<GameInviteProps> = ({ onClose }) => {
     setError(null);
 
     try {
-      const message: GameMessage = {
+      wsService.send({
         type: 'SEND_INVITE',
         payload: {
           targetUserId: selectedPlayer.id
         }
-      };
-      wsService.send(message);
-      onClose();
+      });
+      setInviteSent(true);
+      setTimeout(onClose, 2000); // Close after showing success message
     } catch (err) {
       setError('Failed to send invite');
     } finally {
@@ -42,6 +42,12 @@ const GameInvite: React.FC<GameInviteProps> = ({ onClose }) => {
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
             {error}
+          </div>
+        )}
+
+        {inviteSent && (
+          <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg">
+            Invite sent to {selectedPlayer?.username}!
           </div>
         )}
 
@@ -67,11 +73,11 @@ const GameInvite: React.FC<GameInviteProps> = ({ onClose }) => {
           </button>
           <button
             onClick={handleInvite}
-            disabled={!selectedPlayer || sending}
+            disabled={!selectedPlayer || sending || inviteSent}
             className="px-4 py-2 bg-primary-light dark:bg-primary-dark text-white rounded-lg
               hover:opacity-90 disabled:opacity-50"
           >
-            {sending ? 'Sending...' : 'Send Invite'}
+            {sending ? 'Sending...' : inviteSent ? 'Invite Sent!' : 'Send Invite'}
           </button>
         </div>
       </div>

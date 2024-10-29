@@ -259,6 +259,33 @@ apiRouter.get('/stats', authenticate as RequestHandler, async (req: AuthRequest,
   }
 });
 
+// Add this endpoint to your server
+app.get('/api/players/search', async (req, res) => {
+  try {
+    const query = req.query.q as string;
+    if (!query || query.length < 2) {
+      return res.json([]);
+    }
+
+    const players = await User.find({
+      username: { $regex: query, $options: 'i' }
+    })
+    .select('username rating')
+    .limit(10);
+
+    const results = players.map(player => ({
+      id: player._id,
+      username: player.username,
+      rating: player.rating
+    }));
+
+    res.json(results);
+  } catch (error) {
+    console.error('Player search error:', error);
+    res.status(500).json({ message: 'Failed to search players' });
+  }
+});
+
 // Mount routers
 app.use('/auth', authRouter);
 app.use('/api', apiRouter);

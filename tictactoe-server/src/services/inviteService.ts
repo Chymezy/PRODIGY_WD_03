@@ -9,6 +9,7 @@ export class InviteService {
   private wsConnections: Map<string, WsConnection> = new Map();
 
   registerConnection(userId: string, ws: WsConnection) {
+    console.log(`Registering WebSocket connection for user: ${userId}`);
     this.wsConnections.set(userId, ws);
   }
 
@@ -51,7 +52,11 @@ export class InviteService {
     const fromUser = await User.findById(fromUserId).select('username');
 
     const targetWs = this.wsConnections.get(toUserId);
+    console.log('Available connections:', Array.from(this.wsConnections.keys()));
+    console.log('Target user connection:', targetWs ? 'found' : 'not found');
+
     if (targetWs?.readyState === WebSocket.OPEN) {
+      console.log('Sending invite to target user:', toUserId);
       this.sendToClient(targetWs, {
         type: 'GAME_INVITE',
         payload: {
@@ -62,6 +67,8 @@ export class InviteService {
           }
         }
       });
+    } else {
+      console.log('Target user not connected or connection not open');
     }
 
     return savedInvite;
@@ -86,7 +93,7 @@ export class InviteService {
       this.sendToClient(senderWs, {
         type: 'INVITE_RESPONSE',
         payload: {
-          inviteId: (invite._id as Types.ObjectId).toString(),
+          inviteId: invite._id.toString(),
           accepted: accept
         }
       });

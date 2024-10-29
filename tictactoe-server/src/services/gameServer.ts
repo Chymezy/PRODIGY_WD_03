@@ -7,6 +7,7 @@ import { gameStatsService } from './gameStatsService';
 
 export class GameServer {
   private rooms: Map<string, GameRoom> = new Map();
+  private readonly inviteService = inviteService;
 
   constructor() {
     setInterval(() => this.cleanupRooms(), config.roomCleanupInterval);
@@ -49,20 +50,23 @@ export class GameServer {
   }
 
   handleConnection(ws: WsConnection) {
-    console.log('New client connected');
-    ws.isAlive = true;
+    if (!ws.isAuthenticated) {
+      ws.close(1008, 'Authentication required');
+      return;
+    }
 
-    ws.on('message', async (message: WebSocket.RawData) => {
-      try {
-        const data = JSON.parse(message.toString());
-        await this.handleMessage(ws, data);
-      } catch (error) {
-        console.error('Error handling message:', error);
-        this.sendToClient(ws, {
-          type: 'ERROR',
-          payload: { message: 'Invalid message format' }
-        });
-      }
+    // Register the connection with inviteService if not already registered
+    if (ws.userId) {
+      inviteService.registerConnection(ws.userId, ws);
+    }
+
+    ws.isAlive = true;
+    ws.on('pong', () => {
+      ws.isAlive = true;
+    });
+
+    ws.on('message', (data: WebSocket.Data) => {
+      this.handleMessage(ws, data);
     });
 
     ws.on('close', () => {
@@ -70,10 +74,6 @@ export class GameServer {
         inviteService.removeConnection(ws.userId);
       }
       this.handleDisconnect(ws);
-    });
-
-    ws.on('pong', () => {
-      ws.isAlive = true;
     });
   }
 
@@ -161,24 +161,27 @@ export class GameServer {
 
   private async handleMessage(ws: WsConnection, message: any) {
     try {
-      switch (message.type) {
+      const parsedMessage = JSON.parse(message.toString());
+      console.log('Received message:', parsedMessage);
+
+      switch (parsedMessage.type) {
         case 'SEND_INVITE':
-          if (!ws.userId || !message.payload.targetUserId) {
+          if (!ws.userId || !parsedMessage.payload.targetUserId) {
             throw new Error('Invalid invite request');
           }
-          await inviteService.createInvite(ws.userId, message.payload.targetUserId);
+          await inviteService.createInvite(ws.userId, parsedMessage.payload.targetUserId);
           break;
 
         case 'RESPOND_INVITE':
-          if (!ws.userId || !message.payload.inviteId) {
+          if (!ws.userId || !parsedMessage.payload.inviteId) {
             throw new Error('Invalid invite response');
           }
           const invite = await inviteService.respondToInvite(
-            message.payload.inviteId,
+            parsedMessage.payload.inviteId,
             ws.userId,
-            message.payload.accept
+            parsedMessage.payload.accept
           );
-          if (invite?.from && message.payload.accept) {
+          if (invite?.from && parsedMessage.payload.accept) {
             const fromWs = inviteService.getConnection(invite.from.toString());
             if (fromWs) {
               await this.createMatchedGame(fromWs, ws);

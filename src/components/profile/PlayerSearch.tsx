@@ -30,8 +30,8 @@ const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect, selectedPlayer })
     setError(null);
 
     try {
-      const response = await axios.get(`/api/players/search?q=${searchQuery}`);
-      setResults(response.data);
+      const response = await axios.get(`http://localhost:8080/api/players/search?q=${searchQuery}`);
+      setResults(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       setError('Failed to search players');
       setResults([]);

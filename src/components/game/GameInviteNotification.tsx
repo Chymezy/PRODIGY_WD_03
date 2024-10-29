@@ -32,6 +32,7 @@ const GameInviteNotification: React.FC<GameInviteNotificationProps> = ({ invite,
   const handleResponse = async (accept: boolean) => {
     setResponding(true);
     try {
+      console.log('Sending invite response:', { inviteId: invite.id, accept });
       wsService.send({
         type: 'RESPOND_INVITE',
         payload: {
@@ -41,14 +42,20 @@ const GameInviteNotification: React.FC<GameInviteNotificationProps> = ({ invite,
       });
 
       if (accept) {
+        // Listen for game creation response
         const handleGameCreated = (message: any) => {
-          if (message.type === 'GAME_CREATED') {
+          console.log('Received game created message:', message);
+          if (message.type === 'GAME_CREATED' && message.payload.roomId) {
             navigate(`/game/${message.payload.roomId}`);
+            onClose();
           }
         };
 
         wsService.addMessageHandler(handleGameCreated);
-        return () => wsService.removeMessageHandler(handleGameCreated);
+        // Clean up the handler after 10 seconds if no response
+        setTimeout(() => {
+          wsService.removeMessageHandler(handleGameCreated);
+        }, 10000);
       } else {
         onClose();
       }
@@ -60,7 +67,7 @@ const GameInviteNotification: React.FC<GameInviteNotificationProps> = ({ invite,
   };
 
   return (
-    <div className={`fixed bottom-4 right-4 transition-all duration-300 transform
+    <div className={`fixed bottom-4 right-4 transition-all duration-300 transform z-50
       ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 max-w-sm">
         <div className="mb-3">

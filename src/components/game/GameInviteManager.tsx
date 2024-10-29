@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { wsService } from '@/services/websocketService';
 import GameInviteNotification from './GameInviteNotification';
 
@@ -17,6 +17,7 @@ const GameInviteManager: React.FC = () => {
   useEffect(() => {
     const handleInvite = (message: any) => {
       if (message.type === 'GAME_INVITE') {
+        console.log('Received invite:', message.payload);
         setInvites(prev => [...prev, message.payload]);
       }
     };

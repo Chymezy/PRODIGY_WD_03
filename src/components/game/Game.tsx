@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { wsService } from '@/services/websocketService';
@@ -7,6 +7,8 @@ import { RootState, AppDispatch } from '@/store';
 import Board from './Board';
 import GameStatus from './GameStatus';
 import GameControls from './GameControls';
+import GameInvite from './GameInvite';
+import GameInviteManager from './GameInviteManager';
 import { getAIMove } from '@/utils/gameUtils';
 
 const Game: React.FC = () => {
@@ -15,6 +17,16 @@ const Game: React.FC = () => {
   const { board, currentPlayer, winner, gameState, playerSymbol, gameMode } = useSelector(
     (state: RootState) => state.game
   );
+  const [showInviteModal, setShowInviteModal] = useState(false);
+
+  // Show invite modal when switching to online mode
+  useEffect(() => {
+    if (gameMode === 'ONLINE' && !roomId) {
+      setShowInviteModal(true);
+    } else {
+      setShowInviteModal(false);
+    }
+  }, [gameMode, roomId]);
 
   // Handle AI moves
   useEffect(() => {
@@ -73,6 +85,14 @@ const Game: React.FC = () => {
           }
         />
         <GameControls />
+
+        {/* Show invite modal for online mode */}
+        {showInviteModal && (
+          <GameInvite onClose={() => setShowInviteModal(false)} />
+        )}
+
+        {/* Handle incoming invites */}
+        <GameInviteManager />
       </div>
     </div>
   );
